@@ -1,0 +1,190 @@
+<project name="3d augmented reality" default="deploy" basedir=".">
+	<description>
+		3d augmented reality..
+		
+		to view this application open the browser to
+		http://localhost:8080/flareaug/html/
+	</description>
+
+	<target name="_init" description="initialize variables">
+		<echo>---------------------------------------</echo>
+		<echo>-	target - init						</echo>
+		<echo>-										</echo>
+		<echo>-	initializing build variables		</echo>
+		<echo>---------------------------------------</echo>
+
+		<!-- Create the time stamp -->
+		<tstamp />
+
+		<!-- make all environment variables accessible -->
+		<property name="apache_tomcat" location="C:\Users\Terry\Desktop\development\apache-tomcat-6.0.20" />
+		<property name="flex-lib" location="C:\Users\Terry\Desktop\development\flex_sdk_3" />
+
+		<!-- set global properties for this build -->
+		<property name="appName" value="flareaug" />
+		<property name="serverAddress" value="localhost" />
+		<property name="serverPort" value="8080" />
+		<property name="pathToSwf" value="com/linuxclicks/blazeds/ui/main/Main.swf" />
+
+		<property name="build" location="build/" />
+		<property name="dist" location="dist/" />
+		<property name="merge" location="merge/" />
+
+		<property name="web-flex" value="pages/flex" />
+		<property name="web-static" value="pages/static" />
+
+
+	</target>
+
+	<target name="_makeBuildFolder" depends="_init" description="create build and dist folders for making and deploying application files">
+		<echo>---------------------------------------</echo>
+		<echo>-	target - makeBuildFolder					</echo>
+		<echo>-										</echo>
+		<echo>-	create build and dist folders for making	</echo>
+		<echo>-	and deploying application files		</echo>
+		<echo>---------------------------------------</echo>
+
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+		<delete dir="${merge}" />
+
+		<mkdir dir="${build}" />
+		<mkdir dir="${dist}" />
+		<mkdir dir="${merge}" />
+	</target>
+
+
+
+	<target name="_war" depends="_init" description="create a war file">
+		<echo>---------------------------------------</echo>
+		<echo>-	target - war					</echo>
+		<echo>-										</echo>
+		<echo>-	make a web archive		</echo>
+		<echo>---------------------------------------</echo>
+
+		<war destfile="${dist}/${appName}.war" needxmlfile="false">
+
+			<fileset dir="${merge}/${web-static}">
+				<include name="**/*" />
+			</fileset>
+
+			<fileset dir="${merge}/${web-flex}">
+				<include name="**/*.swf" />
+			</fileset>
+
+
+		</war>
+	</target>
+
+	<target name="_clean" depends="_init" description="clean up">
+		<echo>---------------------------------------</echo>
+		<echo>-	target - clean					</echo>
+		<echo>-										</echo>
+		<echo>-	clean previous build artifacts		</echo>
+		<echo>---------------------------------------</echo>
+
+		<!-- Delete the ${build} and ${dist} directory trees -->
+		<delete dir="${build}" />
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+		<delete dir="${merge}" />
+	</target>
+	
+	<target name="_package" depends="_init" description="compile the source ">
+		<echo>---------------------------------------</echo>
+		<echo>-	target - package					</echo>
+		<echo>-										</echo>
+		<echo>-	move the files to a temporary spot		</echo>
+		<echo>-	for any further after the fact code modifications </echo>
+		<echo>-	needed to be made after the actual coding </echo>
+		<echo>---------------------------------------</echo>
+		
+		<copy todir="${merge}" >
+			<fileset dir="${basedir}">
+				<include name="web/**"/>
+			</fileset>
+		</copy>
+			
+		<copy todir="${merge}" >
+			<fileset dir="${basedir}">
+				<include name="pages/**"/>
+			</fileset>
+		</copy>
+
+		<replace dir="${merge}" token="@appName@" value="${appName}" />
+        <replace dir="${merge}" token="@serverAddress@" value="${serverAddress}" />
+        <replace dir="${merge}" token="@serverPort@" value="${serverPort}" />
+        <replace dir="${merge}" token="@pathToSwf@" value="${pathToSwf}" />
+
+	</target>
+	
+	<target name="_mxmlc" depends="_init" description="compile action script files into swf files">
+		<echo>---------------------------------------</echo>
+		<echo>-	target - mxmlc					</echo>
+		<echo>-										</echo>
+		<echo>-	generate swf files from action script files		</echo>
+		<echo>---------------------------------------</echo>
+
+		<java jar="${flex-lib}/lib/mxmlc.jar" fork="true" failonerror="true">
+			<arg value="-debug=true" />
+			<arg value="-target-player=10.0.0" />
+			<arg value="+flexlib=${flex-lib}/frameworks" />
+			<arg value="-load-config=${flex-lib}/frameworks/flex-config.xml" />
+			<arg value="-compiler.source-path=${merge}/${web-flex}" />
+			<arg value="-compiler.include-libraries=${web-flex}/com/linuxclicks/blazeds/swc/ThunderBoltAS3_Flex.swc" />
+			<arg value="-compiler.include-libraries=${web-flex}/com/linuxclicks/blazeds/swc/SWFAddress.swc" />
+			<arg value="-compiler.include-libraries=${web-flex}/com/linuxclicks/blazeds/swc/Papervision3D_2.0.883.swc" />
+<!--
+			<arg value="-compiler.include-libraries=${web-flex}/com/linuxclicks/blazeds/swc/FLARToolKit.swc" />
+-->			
+			<arg value="${merge}/${web-flex}/com/linuxclicks/blazeds/ui/main/Main.as" />
+		</java>
+
+	</target>
+
+
+	<target name="deploy" depends="_init" description="undeploy the old and deploy the new">
+		<echo>---------------------------------------</echo>
+		<echo>-	target - deploy					</echo>
+		<echo>-										</echo>
+		<echo>-	undeploy the old and deploy the new		</echo>
+		<echo>---------------------------------------</echo>
+
+		<echo>***************</echo>
+		<echo>make sure the webapp is stopped!!!</echo>
+		<echo>***************</echo>
+
+		<antcall target="_makeBuildFolder" />
+		<antcall target="_package" />
+		<antcall target="_mxmlc" />
+		<antcall target="_war" />
+
+		<delete file="${apache_tomcat}\webapps\${appName}.war" />
+		<delete dir="${apache_tomcat}\webapps\${appName}" />
+		<move file="${dist}/${appName}.war" todir="${apache_tomcat}/webapps/" />
+
+	</target>
+
+	<target name="tomcat-start" depends="_init">
+		<java jar="${apache_tomcat}/bin/bootstrap.jar" fork="true">
+			<jvmarg value="-Dcatalina.home=${apache_tomcat}" />
+		</java>
+	</target>
+
+	<target name="tomcat-stop" depends="_init">
+		<java jar="${apache_tomcat}/bin/bootstrap.jar" fork="true">
+			<jvmarg value="-Dcatalina.home=${apache_tomcat}" />
+			<arg line="stop" />
+		</java>
+	</target>
+
+	<target name="tomcat-debug" depends="_init">
+		<java jar="${apache_tomcat}/bin/bootstrap.jar" fork="true">
+			<jvmarg value="-Dcatalina.home=${apache_tomcat}" />
+			<jvmarg value="-Xdebug" />
+			<jvmarg value="-Xrunjdwp:transport=dt_socket,address=5000,server=y,suspend=n" />
+		</java>
+	</target>
+
+
+</project>

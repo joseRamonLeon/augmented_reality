@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <title>SWFAddress Application</title>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <script type="text/javascript" src="http://@serverAddress@:@serverPort@/@appName@/js/swfobject/swfobject.js"></script>
+        <script type="text/javascript" src="http://@serverAddress@:@serverPort@/@appName@/js/swfaddress/swfaddress.js"></script>
+        <style type="text/css">
+            /* hide from ie on mac \*/
+            html {
+                height: 100%;
+                overflow: hidden;
+            }
+            #content {
+                height: 100%;
+            }
+            /* end hide */
+            body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                background: #FFFFFF;
+                font: 76% Arial, sans-serif;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="content">
+            <p>In order to view this page you need JavaScript and Flash Player 9+ support!</p>
+        </div>
+        <script type="text/javascript">
+        // <![CDATA[
+            var so = new SWFObject('http://@serverAddress@:@serverPort@/@appName@/@pathToSwf@', 'website', '100%', '100%', '9', '#869CA7');
+            so.useExpressInstall('http://@serverAddress@:@serverPort@/@appName@/js/swfobject/expressinstall.swf');
+            so.addParam('menu', 'false');            
+            so.write('content');
+        // ]]>
+        </script>
+    </body>
+</html>
